@@ -1,13 +1,80 @@
-import { Link } from 'expo-router'
-import { Text, View, StyleSheet } from 'react-native'
+import { useState } from "react"
+import { Text, View, StyleSheet, Alert } from "react-native"
+import * as ImagePicker from "expo-image-picker"
+
+import Button from "@/components/Button"
+import ImageViewer from "@/components/ImageViewer"
+import CircleButton from "@/components/CircleButton"
+import IconButton from "@/components/IconsButton"
+import EmojiPicker from "@/components/EmojiPicker"
+
+const placeHolderImage = require("../../assets/images/background-image.png")
 
 export default function Index() {
+  const [selectedImage, setSelectedImage] = useState<{ uri: string }>({ uri: "" })
+  const [showAppOptions, setShowAppOptions] = useState<boolean>(false)
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false)
+
+  const pickImageAsync = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      quality: 1,
+    })
+
+    if (!result.canceled) {
+      console.log(result)
+      if (result.assets && result.assets.length > 0) {
+        setSelectedImage({ uri: result.assets[0].uri })
+        setShowAppOptions(true)
+      }
+    } else {
+      Alert.alert("Image picker was cancelled")
+    }
+  }
+
+  const onReset = () => {
+    setShowAppOptions(false)
+  }
+
+  const onAddSticker = () => {
+    setIsModalVisible(true)
+  }
+
+  const onSaveImageAsync = async () => {
+    // we will implement this later
+    setIsModalVisible(false)
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Hi From Prathamesh</Text>
-      {/* <Link href={'/about'} style={styles.button}>
-        Go to About 1
-      </Link> */}
+      <View style={styles.imageContainer}>
+        <ImageViewer imageSource={selectedImage?.uri ? selectedImage.uri : placeHolderImage} />
+      </View>
+
+      {showAppOptions ? (
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+          }}
+        >
+          <IconButton icon="restore" label="Reset" onPress={onReset} />
+          <CircleButton onPress={onAddSticker} />
+          <IconButton icon="save-alt" label="Save" onPress={onSaveImageAsync} />
+        </View>
+      ) : (
+        <View>
+          <Button label="Choose Image" theme="primary" onClick={() => setShowAppOptions(true)} />
+          <Button
+            label="Use this photo"
+            theme="secondary"
+            onClick={() => setShowAppOptions(true)}
+          />
+        </View>
+      )}
+      <EmojiPicker isVisible={isModalVisible} onClose={() => setIsModalVisible(false)}>
+        <Text>Stickers go here</Text>
+      </EmojiPicker>
     </View>
   )
 }
@@ -15,19 +82,17 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#25292e',
-  },
-  text: {
-    color: '#fff',
-  },
-  button: {
-    color: '#fff',
-    backgroundColor: '#000',
-    paddingHorizontal: 15,
+    flexDirection: "column",
+    alignItems: "center",
     paddingVertical: 10,
-    borderRadius: 8,
-    marginTop: 10,
+    backgroundColor: "#25292e",
+  },
+  image: {
+    width: 320,
+    height: 440,
+    borderRadius: 10,
+  },
+  imageContainer: {
+    flex: 1,
   },
 })
