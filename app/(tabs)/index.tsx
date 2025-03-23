@@ -1,7 +1,9 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Text, View, StyleSheet, Alert } from "react-native"
 import { type ImageSource } from "expo-image"
 import * as ImagePicker from "expo-image-picker"
+import * as MediaLibrary from "expo-media-library"
+import { captureRef } from "react-native-view-shot"
 
 import Button from "@/components/Button"
 import ImageViewer from "@/components/ImageViewer"
@@ -18,6 +20,14 @@ export default function Index() {
   const [showAppOptions, setShowAppOptions] = useState<boolean>(false)
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false)
   const [selectedEmoji, setSelectedEmoji] = useState<ImageSource | undefined>(undefined)
+  const [permissionResponse, requestPermission] = MediaLibrary.usePermissions()
+  const savedImageRef = useRef(null)
+
+  useEffect(() => {
+    if (!permissionResponse?.granted) {
+      requestPermission()
+    }
+  })
 
   const pickImageAsync = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -50,15 +60,29 @@ export default function Index() {
 
   const onSaveImageAsync = async () => {
     // we will implement this later
-    setIsModalVisible(false)
+    // setIsModalVisible(false)
+    try {
+      const localUri = await captureRef(savedImageRef, {
+        height: 440,
+        quality: 1,
+      })
+
+      await MediaLibrary.saveToLibraryAsync(localUri)
+      if (localUri) {
+        alert("Saved!")
+      }
+    } catch (e) {
+      console.log(e)
+    }
   }
 
   return (
     <View style={styles.container}>
       <View style={styles.imageContainer}>
-        <ImageViewer imageSource={selectedImage?.uri ? selectedImage.uri : placeHolderImage} />
-
-        {selectedEmoji && <EmojiSticker imageSize={40} stickerSource={selectedEmoji} />}
+        <View ref={savedImageRef} collapsable={false}>
+          <ImageViewer imageSource={selectedImage?.uri ? selectedImage.uri : placeHolderImage} />
+          {selectedEmoji && <EmojiSticker imageSize={40} stickerSource={selectedEmoji} />}
+        </View>
       </View>
 
       {showAppOptions ? (
@@ -74,7 +98,7 @@ export default function Index() {
         </View>
       ) : (
         <View>
-          <Button label="Choose Image" theme="primary" onClick={() => setShowAppOptions(true)} />
+          <Button label="Choose Image" theme="primary" onClick={pickImageAsync} />
           <Button
             label="Use this photo"
             theme="secondary"
