@@ -36,7 +36,6 @@ export default function Index() {
     })
 
     if (!result.canceled) {
-      console.log(result)
       if (result.assets && result.assets.length > 0) {
         setSelectedImage({ uri: result.assets[0].uri })
         setShowAppOptions(true)
